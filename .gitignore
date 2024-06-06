@@ -1,0 +1,16 @@
+# Ignore Python bytecode files
+__pycache__/
+
+# Ignore Python environment directories
+bin/
+lib/
+include/
+
+# Ignore pyenv configuration file
+pyvenv.cfg
+
+# Ignore .env file
+.env
+
+# Ignore the cert folder
+cert/
