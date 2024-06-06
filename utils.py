@@ -3,16 +3,18 @@ from enum import Enum
 import binascii
 import os
 
+
 class VerificationResult(Enum):
     GOOD_MATCH = 0
     BAD_MATCH = 1
+
 
 def sign_data(data):
     try:
         with open(os.getenv("KEY_PEM_PATH"), "rb") as f:
             key_buff = f.read()
     except FileNotFoundError:
-        print(f"key.pem file not found, path:{os.getenv("KEY_PEM_PATH")}")
+        print(f"key.pem file not found, path:{os.getenv('KEY_PEM_PATH')}")
         return None
     except PermissionError:
         print("key.pem file can't be opened. Permissions missing.")
@@ -48,7 +50,7 @@ def verify(data_to_verify, sign):
         with open(os.getenv("CERT_PEM_PATH"), "rb") as f:
             cert_buff = f.read()
     except FileNotFoundError:
-        print(f"cert.pem file not found, path:{os.getenv("CERT_PEM_PATH")}")
+        print(f"cert.pem file not found, path:{os.getenv('CERT_PEM_PATH')}")
         return None
     except PermissionError:
         print("cert.pem file can't be opened. Permissions missing.")

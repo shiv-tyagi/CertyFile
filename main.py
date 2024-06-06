@@ -15,12 +15,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html"
     )
+
 
 @app.post(
         "/sign",
@@ -52,7 +54,8 @@ def generate_sign(payload_to_sign: models.PayloadToSign, response: Response):
     "/verify",
     response_description=f"Return {utils.VerificationResult.GOOD_MATCH.value}"
                          "if the signature is valid,"
-                         f"{utils.VerificationResult.BAD_MATCH.value} otherwise",
+                         f"{utils.VerificationResult.BAD_MATCH.value}"
+                         "otherwise",
     responses={
         200: {
             "model": utils.VerificationResult
