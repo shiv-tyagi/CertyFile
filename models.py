@@ -13,7 +13,7 @@ class SignatureRequest(BaseModel):
     payload:Payload
     auth_token: str
 
-class SignedPayload(BaseModel):
+class VerificationRequest(BaseModel):
     payload_to_verify: Payload
     signature: str
 
