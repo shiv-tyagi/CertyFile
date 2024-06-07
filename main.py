@@ -39,7 +39,7 @@ def home(request: Request):
             }
         }
 )
-def generate_sign(payload_to_sign: models.PayloadToSign, response: Response):
+def generate_sign(payload_to_sign: models.Payload, response: Response):
     to_sign = json.dumps(payload_to_sign.model_dump())
     sign = utils.sign_data(to_sign)
 
@@ -77,7 +77,7 @@ def verify_sign(signed_payload: models.SignedPayload, response: Response):
         response.status_code = 400
         return "Check signature string length"
 
-    data_to_verify = json.dumps(signed_payload_dict["data_to_verify"])
+    data_to_verify = json.dumps(signed_payload_dict["payload_to_verify"])
     result = utils.verify(data_to_verify, signed_payload_dict["signature"])
 
     if not result:
