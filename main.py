@@ -2,12 +2,16 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from datetime import datetime, timezone, timedelta
 import dotenv
 import json
 import utils
 import models
+import jwt
+import os
 
 dotenv.load_dotenv()
+secret = os.urandom(32).hex()
 
 app = FastAPI()
 
@@ -40,8 +44,24 @@ def home(request: Request):
         }
 )
 def generate_sign(signature_request: models.SignatureRequest, response: Response):
-    to_sign = json.dumps(signature_request.payload.model_dump())
-    sign = utils.sign_data(to_sign)
+    to_sign = signature_request.payload.model_dump()
+
+    try:
+        token_payload = jwt.decode(signature_request.auth_token, key=secret, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Token expired! Try again!"
+    except jwt.DecodeError:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Invalid token! Try again!"
+    print(type(token_payload))
+
+
+    if not utils.validate_parties_in_token(token_payload, to_sign):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Auth token was generated for different parties. Provide Valid Token"
+
+    sign = utils.sign_data(json.dumps(to_sign))
 
     if not sign:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -83,3 +103,11 @@ def verify_sign(verification_request: models.VerificationRequest, response: Resp
         return "Couldn't verify signature. Internal error."
 
     return result
+
+
+@app.post(
+    "/auth_token"
+)
+def auth_token(token_request: models.TokenRequest, response: Response):
+    token = jwt.encode({"parties": token_request.parties.model_dump(), "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=3)}, key=secret, algorithm="HS256")
+    return token
