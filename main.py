@@ -44,7 +44,10 @@ def home(request: Request):
         }
 )
 def generate_sign(signature_request: models.SignatureRequest, response: Response):
-    to_sign = signature_request.payload.model_dump()
+    if not utils.validate_email(signature_request.payload.parties.one) or \
+       not utils.validate_email(signature_request.payload.parties.two):
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return "Invalid email format for one or both parties"
 
     try:
         token_payload = jwt.decode(signature_request.auth_token, key=secret, algorithms=["HS256"])
@@ -54,9 +57,8 @@ def generate_sign(signature_request: models.SignatureRequest, response: Response
     except jwt.DecodeError:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid token! Try again!"
-    print(type(token_payload))
 
-
+    to_sign = signature_request.payload.model_dump()
     if not utils.validate_parties_in_token(token_payload, to_sign):
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Auth token was generated for different parties. Provide Valid Token"
@@ -109,5 +111,10 @@ def verify_sign(verification_request: models.VerificationRequest, response: Resp
     "/auth_token"
 )
 def auth_token(token_request: models.TokenRequest, response: Response):
+    if not utils.validate_email(token_request.parties.one) or \
+       not utils.validate_email(token_request.parties.two):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return "Invalid email format for one or both parties"
+
     token = jwt.encode({"parties": token_request.parties.model_dump(), "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=3)}, key=secret, algorithm="HS256")
     return token
