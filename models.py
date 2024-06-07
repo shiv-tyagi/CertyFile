@@ -5,10 +5,10 @@ class Parties(BaseModel):
     one: str
     two: Union[str, None] = None
 
-class PayloadToSign(BaseModel):
-    data_to_sign: Union[str, None] = None
+class Payload(BaseModel):
+    data: Union[str, None] = None
     parties: Parties
 
 class SignedPayload(BaseModel):
-    data_to_verify: PayloadToSign
+    payload_to_verify: Payload
     signature: str
