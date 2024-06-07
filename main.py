@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -28,13 +28,13 @@ def home(request: Request):
         "/sign",
         response_description="Return signature for the input data in hex",
         responses={
-            200: {
+            status.HTTP_200_OK: {
                 "model": str
             },
-            400: {
+            status.HTTP_400_BAD_REQUEST: {
                 "model": str
             },
-            500: {
+            status.HTTP_500_INTERNAL_SERVER_ERROR: {
                 "model": str
             }
         }
@@ -44,7 +44,7 @@ def generate_sign(signature_request: models.SignatureRequest, response: Response
     sign = utils.sign_data(to_sign)
 
     if not sign:
-        response.status_code = 500
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return "Couldn't generate signature. Internal error."
 
     return sign
@@ -57,13 +57,13 @@ def generate_sign(signature_request: models.SignatureRequest, response: Response
                          f"{utils.VerificationResult.BAD_MATCH.value}"
                          "otherwise",
     responses={
-        200: {
+        status.HTTP_200_OK: {
             "model": utils.VerificationResult
         },
-        400: {
+        status.HTTP_400_BAD_REQUEST: {
             "model": str
         },
-        500: {
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
             "model": str
         }
     }
@@ -72,14 +72,14 @@ def verify_sign(verification_request: models.VerificationRequest, response: Resp
     # we generate 512 byte signature, we expect the same as input
     # 512 bytes = 512*2 hex chars
     if len(verification_request.signature) != 512*2:
-        response.status_code = 400
+        response.status_code = status.HTTP_400_BAD_REQUEST
         return "Check signature string length"
 
     data_to_verify = json.dumps(verification_request.payload.model_dump())
     result = utils.verify(data_to_verify, verification_request.signature)
 
     if not result:
-        response.status_code = 500
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return "Couldn't verify signature. Internal error."
 
     return result
