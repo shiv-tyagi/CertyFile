@@ -16,3 +16,6 @@ class SignatureRequest(BaseModel):
 class SignedPayload(BaseModel):
     payload_to_verify: Payload
     signature: str
+
+class TokenRequest(BaseModel):
+    parties: Parties
