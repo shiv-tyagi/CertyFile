@@ -2,6 +2,7 @@ from OpenSSL import crypto
 from enum import Enum
 import binascii
 import os
+import re
 
 
 class VerificationResult(Enum):
@@ -75,3 +76,12 @@ def verify(data_to_verify: str, sign: str):
 def validate_parties_in_token(token_payload: dict, payload_to_sign: dict):
     return token_payload["parties"]["one"] == payload_to_sign["parties"]["one"] and \
            token_payload["parties"]["two"] == payload_to_sign["parties"]["two"]
+
+
+def validate_email(email):
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+
+    if(re.fullmatch(regex, email)):
+        return True
+    
+    return False
