@@ -68,17 +68,17 @@ def generate_sign(payload_to_sign: models.PayloadToSign, response: Response):
         }
     }
 )
-def verify_sign(verification_pair: models.SignedPayload, response: Response):
-    v_pair_dict = verification_pair.model_dump()
+def verify_sign(signed_payload: models.SignedPayload, response: Response):
+    signed_payload_dict = signed_payload.model_dump()
 
     # we generate 512 byte signature, we expect the same as input
     # 512 bytes = 512*2 hex chars
-    if len(v_pair_dict["signature"]) != 512*2:
+    if len(signed_payload_dict["signature"]) != 512*2:
         response.status_code = 400
         return "Check signature string length"
 
-    data_to_verify = json.dumps(v_pair_dict["data_to_verify"])
-    result = utils.verify(data_to_verify, v_pair_dict["signature"])
+    data_to_verify = json.dumps(signed_payload_dict["data_to_verify"])
+    result = utils.verify(data_to_verify, signed_payload_dict["signature"])
 
     if not result:
         response.status_code = 500
