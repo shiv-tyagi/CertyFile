@@ -9,7 +9,7 @@ class VerificationResult(Enum):
     BAD_MATCH = 1
 
 
-def sign_data(data):
+def sign_data(data: str):
     try:
         with open(os.getenv("KEY_PEM_PATH"), "rb") as f:
             key_buff = f.read()
@@ -44,7 +44,7 @@ def sign_data(data):
         return None
 
 
-def verify(data_to_verify, sign):
+def verify(data_to_verify: str, sign: str):
     sign = binascii.unhexlify(sign.encode())
     try:
         with open(os.getenv("CERT_PEM_PATH"), "rb") as f:
@@ -70,3 +70,8 @@ def verify(data_to_verify, sign):
         return VerificationResult.GOOD_MATCH
     except crypto.Error:
         return VerificationResult.BAD_MATCH
+
+
+def validate_parties_in_token(token_payload: dict, payload_to_sign: dict):
+    return token_payload["parties"]["one"] == payload_to_sign["parties"]["one"] and \
+           token_payload["parties"]["two"] == payload_to_sign["parties"]["two"]
