@@ -14,7 +14,7 @@ class SignatureRequest(BaseModel):
     auth_token: str
 
 class VerificationRequest(BaseModel):
-    payload_to_verify: Payload
+    payload: Payload
     signature: str
 
 class TokenRequest(BaseModel):
