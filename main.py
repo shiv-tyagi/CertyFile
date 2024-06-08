@@ -2,23 +2,25 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from datetime import datetime, timezone, timedelta
 import dotenv
 import json
 import utils
 import models
-import jwt
 import os
+import otp
 
 dotenv.load_dotenv()
-secret = os.urandom(32).hex()
 
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
 
+otp_manager = otp.OTPManager(
+    redis_host=os.getenv("REDIS_HOST"),
+    redis_port=os.getenv("REDIS_PORT"),
+    otp_attempts_limit_email=2,
+    otp_rate_limit_window_email=50
+)
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -44,25 +46,21 @@ def home(request: Request):
         }
 )
 def generate_sign(signature_request: models.SignatureRequest, response: Response):
-    if not utils.validate_email(signature_request.payload.parties.one) or \
-       not utils.validate_email(signature_request.payload.parties.two):
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return "Invalid email format for one or both parties"
+    for party in signature_request.payload.parties:
+        if not utils.validate_email(party):
+                response.status_code = status.HTTP_400_BAD_REQUEST
+                return f"{party} is not a valid email address"
 
     try:
-        token_payload = jwt.decode(signature_request.auth_token, key=secret, algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
+        utils.validate_tokens(
+            tokens=signature_request.auth_tokens,
+            parties=signature_request.payload.parties
+        )
+    except Exception as e:
         response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Token expired! Try again!"
-    except jwt.DecodeError:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid token! Try again!"
+        return str(e)
 
     to_sign = signature_request.payload.model_dump()
-    if not utils.validate_parties_in_token(token_payload, to_sign):
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Auth token was generated for different parties. Provide Valid Token"
-
     sign = utils.sign_data(json.dumps(to_sign))
 
     if not sign:
@@ -108,13 +106,32 @@ def verify_sign(verification_request: models.VerificationRequest, response: Resp
 
 
 @app.post(
-    "/auth_token"
+    "/send_otp"
 )
-def auth_token(token_request: models.TokenRequest, response: Response):
-    if not utils.validate_email(token_request.parties.one) or \
-       not utils.validate_email(token_request.parties.two):
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return "Invalid email format for one or both parties"
+def send_otp(otp_request: models.OTPRequest, response: Response):
+    try:
+        otp_manager.generate_otp(otp_request.email)
+    except otp.OTPLimitExceededException as e:
+        response.status_code = status.HTTP_429_TOO_MANY_REQUESTS
+        return e
+    
+    return "OTP Sent Successfully"
 
-    token = jwt.encode({"parties": token_request.parties.model_dump(), "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=3)}, key=secret, algorithm="HS256")
+
+@app.post(
+    "/verify_otp"
+)
+def verify_otp(otp_verification_request: models.OTPVerificationRequest, response: Response):
+    if not utils.validate_email(otp_verification_request.email):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return "Invalid email"
+
+    if not otp_manager.verify_otp(
+        otp=otp_verification_request.otp,
+        email=otp_verification_request.email
+    ):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Invalid OTP"
+
+    token = utils.generate_token(email=otp_verification_request.email)
     return token

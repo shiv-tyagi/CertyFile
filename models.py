@@ -7,15 +7,19 @@ class Parties(BaseModel):
 
 class Payload(BaseModel):
     data: Union[str, None] = None
-    parties: Parties
+    parties: list[str]
 
 class SignatureRequest(BaseModel):
     payload:Payload
-    auth_token: str
+    auth_tokens: list[str]
 
 class VerificationRequest(BaseModel):
     payload: Payload
     signature: str
 
-class TokenRequest(BaseModel):
-    parties: Parties
+class OTPVerificationRequest(BaseModel):
+    email: str
+    otp: str
+
+class OTPRequest(BaseModel):
+    email: str
