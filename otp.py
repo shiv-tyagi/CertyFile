@@ -65,7 +65,6 @@ class OTPManager:
         return
 
     def verify_otp(self, otp: str, email: str):
-        print(otp, email)
         key = self.otp_db_key(email)
         val:bytes = self.redis.get(key)
 
