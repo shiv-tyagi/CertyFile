@@ -1,6 +1,13 @@
 document.getElementById("signForm").addEventListener("submit", function(event) {
     event.preventDefault();
-    
+
+    document.getElementById("partyOneOTP").setAttribute("placeholder", "OTP for " + document.getElementById("partyOneEmail").value);
+    document.getElementById("partyTwoOTP").setAttribute("placeholder", "OTP for " + document.getElementById("partyTwoEmail").value);
+    var otp_modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("otpModal"));
+    otp_modal.show();
+});
+
+document.getElementById("generateSignButton").addEventListener("click", function(event) {
     const plainText = document.getElementById('textToSign').value;
     const partyOne = document.getElementById('partyOneEmail').value;
     const partyTwo = document.getElementById('partyTwoEmail').value;
