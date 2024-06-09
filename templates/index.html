@@ -20,11 +20,9 @@
                     <span class="ms-2 text-white" style="font-size: 25px;">CertyFile</span>
                 </a>
             </div>
-            <!-- <div>
-                <a href="https://github.com/ArduPilot/CustomBuild/issues/new" class="btn btn-outline-light me-1"><i class="bi bi-github me-2"></i>Report an issue</a>
-                <a href="/builds/" class="btn btn-outline-light me-1"><i class="bi bi-folder2-open me-2"></i>Go to builds directory</a>
-                <a href="/" class="btn btn-primary"><i class="bi bi-eye me-2"></i>View all builds</a>     
-            </div> -->
+            <div>
+                <a href="javascript:void(0);" class="btn btn-outline-light" id="verifyModalButton" onclick="openVerifySignModal()"><i class="bi bi-check-circle me-2"></i>Verify Signature</a>
+            </div>
         </div>
     </nav>
     <div class="container-fluid px-3 py-3">
@@ -89,7 +87,10 @@
                 </div>
                 <div class="modal-footer">
                     <div class="container-fluid d-flex justify-content-end">
-                        <div class="p-2">
+                        <div class="pe-2">
+                            <button type="button" class="btn btn-outline-secondary" id="downloadSignedFileButton">Download</button>
+                        </div>
+                        <div class="pe-2">
                             <button type="button" class="btn btn-outline-secondary" id="copySignatureButton">Copy</button>
                         </div>
                     </div>
@@ -121,6 +122,24 @@
                 <div class="modal-footer">
                     <div class="container-fluid d-flex justify-content-end p-0">
                         <button type="button" class="btn btn-primary" id="generateSignButton" disabled>Generate Signature</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification modal -->
+    <div class="modal fade" id="verificationModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="verificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verificationModalLabel">Verify Signature</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-2">
+                        <input type="file" class="form-control" id="fileInput">
+                        <label class="input-group-text" for="fileInput">Upload</label>
                     </div>
                 </div>
             </div>

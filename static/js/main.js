@@ -13,6 +13,14 @@ document.getElementById("signForm").addEventListener("submit", function(event) {
     otp_modal.show();
 });
 
+function download(content, fileName, contentType) {
+    const a = document.createElement("a");
+    const file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
+
 document.getElementById("generateSignButton").addEventListener("click", function(event) {
     const plainText = document.getElementById('textToSign').value;
     const partyOne = document.getElementById('partyOneEmail').value;
@@ -169,3 +177,77 @@ function verifyOTP(party_prefix) {
         alert('Error: ' + error);
     });
 }
+
+function openVerifySignModal() {
+    document.getElementById("fileInput").value = ""
+    var sign_verify_modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("verificationModal"));
+    sign_verify_modal.show();
+}
+
+document.getElementById("downloadSignedFileButton").addEventListener("click", function() {
+    const plainText = document.getElementById('textToSign').value;
+    const partyOne = document.getElementById('partyOneEmail').value;
+    const partyTwo = document.getElementById('partyTwoEmail').value;
+    const signature = document.getElementById('outputTextArea').value;
+
+    const parties = [partyOne, partyTwo]
+
+    const signedJSON = {
+        payload: {
+            data: plainText,
+            parties: parties
+        },
+        signature: signature
+    }
+
+    download(JSON.stringify(signedJSON, null, 2), "signed_file.json", "text/plain");
+});
+
+document.getElementById('fileInput').addEventListener('change', (event) => {
+    const file_list = event.target.files;
+
+    if (file_list.length > 1) {
+        console.log('Could not process multiple files. Upload single file');
+        return;
+    }
+
+    const file = file_list[0];
+
+    const reader = new FileReader();
+    reader.addEventListener('load', (event) => {
+        fileContent = reader.result;
+        const verification_request = JSON.parse(fileContent);
+
+        fetch("/verify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(verification_request)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            } else {
+                response.text()
+                .then(text => {
+                    console.log(text);
+                })
+                throw new Error(`/verify: ${response.status} ${response.statusText}`);
+            }
+        })
+        .then(response_text => {
+            const result = JSON.parse(response_text);
+            if (result == 0) {
+                alert('The signature is valid and matches with the payload');
+            } else {
+                alert('The signature does not match the payload. The payload is not signed by us or is possibly tampered.');
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    });
+    
+    reader.readAsText(file);
+});
